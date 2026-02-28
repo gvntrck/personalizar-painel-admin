@@ -1,13 +1,9 @@
 (function ($) {
     var settings = window.pacPanelSettings || {};
 
-    var shortcutBody = $('#pac-items-body');
-    var addShortcutButton = $('#pac-add-item');
-    var shortcutTemplate = $('#pac-item-row-template').html() || '';
-
-    var metaBoxBody = $('#pac-meta-boxes-body');
-    var addMetaBoxButton = $('#pac-add-meta-box');
-    var metaBoxTemplate = $('#pac-meta-box-row-template').html() || '';
+    var body = $('#pac-items-body');
+    var addButton = $('#pac-add-item');
+    var template = $('#pac-item-row-template').html() || '';
 
     var iconModal = $('#pac-icon-modal');
     var iconGrid = $('#pac-icon-grid');
@@ -16,14 +12,9 @@
 
     var i18n = settings.i18n || {};
     var icons = (Array.isArray(settings.icons) && settings.icons.length) ? settings.icons : ['dashicons-admin-links'];
-
-    var nextShortcutIndex = Number.isInteger(parseInt(settings.nextIndex, 10))
+    var nextIndex = Number.isInteger(parseInt(settings.nextIndex, 10))
         ? parseInt(settings.nextIndex, 10)
-        : (shortcutBody.length ? shortcutBody.find('tr').length : 0);
-
-    var nextMetaBoxIndex = Number.isInteger(parseInt(settings.nextMetaBoxIndex, 10))
-        ? parseInt(settings.nextMetaBoxIndex, 10)
-        : (metaBoxBody.length ? metaBoxBody.find('tr').length : 0);
+        : (body.length ? body.find('tr').length : 0);
 
     var activeIconInput = null;
     var selectedIcon = 'dashicons-admin-links';
@@ -107,38 +98,23 @@
         activeIconInput = null;
     }
 
-    if (shortcutBody.length && addShortcutButton.length && shortcutTemplate.length) {
-        addShortcutButton.on('click', function (event) {
+    if (body.length && addButton.length && template.length) {
+        addButton.on('click', function (event) {
             event.preventDefault();
 
-            var rowHtml = shortcutTemplate.replace(/__INDEX__/g, String(nextShortcutIndex));
-            shortcutBody.append(rowHtml);
-            nextShortcutIndex += 1;
+            var rowHtml = template.replace(/__INDEX__/g, String(nextIndex));
+            body.append(rowHtml);
+            nextIndex += 1;
         });
 
-        shortcutBody.on('click', '.pac-remove-item', function (event) {
+        body.on('click', '.pac-remove-item', function (event) {
             event.preventDefault();
             $(this).closest('tr').remove();
         });
 
-        shortcutBody.on('click', '.pac-open-icon-picker', function (event) {
+        body.on('click', '.pac-open-icon-picker', function (event) {
             event.preventDefault();
             openIconPicker($(this).closest('tr').find('.pac-icon-input').first());
-        });
-    }
-
-    if (metaBoxBody.length && addMetaBoxButton.length && metaBoxTemplate.length) {
-        addMetaBoxButton.on('click', function (event) {
-            event.preventDefault();
-
-            var rowHtml = metaBoxTemplate.replace(/__MB_INDEX__/g, String(nextMetaBoxIndex));
-            metaBoxBody.append(rowHtml);
-            nextMetaBoxIndex += 1;
-        });
-
-        metaBoxBody.on('click', '.pac-remove-meta-box', function (event) {
-            event.preventDefault();
-            $(this).closest('tr').remove();
         });
     }
 
