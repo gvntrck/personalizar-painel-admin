@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Painel Admin
+ * Plugin Name: WP Client Dashboard
  * Description: Personaliza a tela inicial do wp-admin com atalhos e blocos para facilitar o uso por clientes.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Codex
  * License: GPLv2 or later
- * Text Domain: painel-admin
+ * Text Domain: wp-client-dashboard
  */
 
 if (!defined('ABSPATH')) {
@@ -16,7 +16,7 @@ final class PAC_Painel_Admin_Cliente
 {
     const OPTION_KEY = 'pac_admin_panel_settings';
     const SLUG = 'pac-admin-panel-settings';
-    const VERSION = '1.3.0';
+    const VERSION = '1.3.1';
 
     public function __construct()
     {
@@ -103,8 +103,8 @@ final class PAC_Painel_Admin_Cliente
     public function register_menu()
     {
         add_menu_page(
-            'Painel do Cliente',
-            'Painel do Cliente',
+            'WP Client Dashboard',
+            'WP Client Dashboard',
             'manage_options',
             self::SLUG,
             array($this, 'render_settings_page'),
@@ -289,8 +289,8 @@ final class PAC_Painel_Admin_Cliente
         if (empty($items)) {
             $settings_url = admin_url('admin.php?page=' . self::SLUG);
             echo '<p>';
-            echo esc_html__('Nenhum card configurado neste bloco.', 'painel-admin') . ' ';
-            echo '<a href="' . esc_url($settings_url) . '">' . esc_html__('Clique aqui para configurar.', 'painel-admin') . '</a>';
+            echo esc_html__('Nenhum card configurado neste bloco.', 'wp-client-dashboard') . ' ';
+            echo '<a href="' . esc_url($settings_url) . '">' . esc_html__('Clique aqui para configurar.', 'wp-client-dashboard') . '</a>';
             echo '</p>';
             echo '</div>';
             return;
@@ -357,7 +357,7 @@ final class PAC_Painel_Admin_Cliente
         }
 
         echo '<div class="wrap pac-settings-wrap">';
-        echo '<h1>Painel do Cliente</h1>';
+        echo '<h1>WP Client Dashboard</h1>';
         echo '<p>Monte um painel simples para o cliente usar na tela inicial do wp-admin.</p>';
 
         if (!empty($_GET['pac_saved'])) {
