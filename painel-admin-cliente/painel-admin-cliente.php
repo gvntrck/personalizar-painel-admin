@@ -1,81 +1,87 @@
 <?php
 /**
- * Plugin Name: Painel Admin do Cliente
+ * Plugin Name: Painel Admin
  * Description: Personaliza a tela inicial do wp-admin com atalhos e blocos para facilitar o uso por clientes.
  * Version: 1.1.0
  * Author: Codex
  * License: GPLv2 or later
- * Text Domain: painel-admin-cliente
+ * Text Domain: painel-admin
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-final class PAC_Painel_Admin_Cliente {
+final class PAC_Painel_Admin_Cliente
+{
     const OPTION_KEY = 'pac_admin_panel_settings';
-    const SLUG       = 'pac-admin-panel-settings';
-    const VERSION    = '1.1.0';
+    const SLUG = 'pac-admin-panel-settings';
+    const VERSION = '1.1.0';
 
-    public function __construct() {
+    public function __construct()
+    {
         add_action('admin_menu', array($this, 'register_menu'));
         add_action('admin_post_pac_save_settings', array($this, 'handle_save_settings'));
         add_action('wp_dashboard_setup', array($this, 'setup_dashboard'), 999);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
     }
 
-    public static function activate() {
+    public static function activate()
+    {
         if (false === get_option(self::OPTION_KEY, false)) {
             update_option(self::OPTION_KEY, self::defaults());
         }
     }
 
-    private static function defaults() {
+    private static function defaults()
+    {
         return array(
             'replace_dashboard' => 1,
-            'welcome_title'     => 'Bem-vindo ao painel da empresa',
-            'welcome_text'      => 'Use os atalhos abaixo para acessar as tarefas do dia a dia.',
-            'items'             => array(
+            'welcome_title' => 'Bem-vindo ao painel da empresa',
+            'welcome_text' => 'Use os atalhos abaixo para acessar as tarefas do dia a dia.',
+            'items' => array(
                 array(
-                    'title'       => 'Criar novo post',
-                    'url'         => 'post-new.php',
+                    'title' => 'Criar novo post',
+                    'url' => 'post-new.php',
                     'description' => 'Publicar uma nova noticia ou conteudo.',
-                    'icon'        => 'dashicons-edit',
-                    'color'       => '#2271b1',
-                    'new_tab'     => 0,
+                    'icon' => 'dashicons-edit',
+                    'color' => '#2271b1',
+                    'new_tab' => 0,
                 ),
                 array(
-                    'title'       => 'Biblioteca de midia',
-                    'url'         => 'upload.php',
+                    'title' => 'Biblioteca de midia',
+                    'url' => 'upload.php',
                     'description' => 'Gerenciar imagens, PDFs e arquivos enviados.',
-                    'icon'        => 'dashicons-format-image',
-                    'color'       => '#00a32a',
-                    'new_tab'     => 0,
+                    'icon' => 'dashicons-format-image',
+                    'color' => '#00a32a',
+                    'new_tab' => 0,
                 ),
                 array(
-                    'title'       => 'Visualizar site',
-                    'url'         => '/',
+                    'title' => 'Visualizar site',
+                    'url' => '/',
                     'description' => 'Abrir o site publico para revisar alteracoes.',
-                    'icon'        => 'dashicons-admin-site',
-                    'color'       => '#d63638',
-                    'new_tab'     => 1,
+                    'icon' => 'dashicons-admin-site',
+                    'color' => '#d63638',
+                    'new_tab' => 1,
                 ),
             ),
         );
     }
 
-    private function empty_item() {
+    private function empty_item()
+    {
         return array(
-            'title'       => '',
-            'url'         => '',
+            'title' => '',
+            'url' => '',
             'description' => '',
-            'icon'        => 'dashicons-admin-links',
-            'color'       => '#2271b1',
-            'new_tab'     => 0,
+            'icon' => 'dashicons-admin-links',
+            'color' => '#2271b1',
+            'new_tab' => 0,
         );
     }
 
-    private function get_settings() {
+    private function get_settings()
+    {
         $settings = get_option(self::OPTION_KEY, array());
         if (!is_array($settings)) {
             $settings = array();
@@ -90,7 +96,8 @@ final class PAC_Painel_Admin_Cliente {
         return $settings;
     }
 
-    public function register_menu() {
+    public function register_menu()
+    {
         add_menu_page(
             'Painel do Cliente',
             'Painel do Cliente',
@@ -102,7 +109,8 @@ final class PAC_Painel_Admin_Cliente {
         );
     }
 
-    public function enqueue_assets($hook) {
+    public function enqueue_assets($hook)
+    {
         $settings_hook = 'toplevel_page_' . self::SLUG;
 
         if ('index.php' !== $hook && $settings_hook !== $hook) {
@@ -117,7 +125,7 @@ final class PAC_Painel_Admin_Cliente {
         );
 
         if ($settings_hook === $hook) {
-            $settings   = $this->get_settings();
+            $settings = $this->get_settings();
             $next_index = count($settings['items']);
 
             wp_enqueue_script(
@@ -133,17 +141,18 @@ final class PAC_Painel_Admin_Cliente {
                 'pacPanelSettings',
                 array(
                     'nextIndex' => $next_index,
-                    'icons'     => $this->get_available_dashicons(),
-                    'i18n'      => array(
+                    'icons' => $this->get_available_dashicons(),
+                    'i18n' => array(
                         'searchPlaceholder' => 'Buscar icone...',
-                        'emptySearch'       => 'Nenhum icone encontrado.',
+                        'emptySearch' => 'Nenhum icone encontrado.',
                     ),
                 )
             );
         }
     }
 
-    public function setup_dashboard() {
+    public function setup_dashboard()
+    {
         $settings = $this->get_settings();
 
         if (!empty($settings['replace_dashboard'])) {
@@ -158,7 +167,8 @@ final class PAC_Painel_Admin_Cliente {
         );
     }
 
-    private function remove_default_dashboard_widgets() {
+    private function remove_default_dashboard_widgets()
+    {
         $widgets = array(
             'dashboard_right_now',
             'dashboard_activity',
@@ -180,7 +190,8 @@ final class PAC_Painel_Admin_Cliente {
         }
     }
 
-    private function build_item_url($url) {
+    private function build_item_url($url)
+    {
         $url = trim((string) $url);
 
         if ('' === $url) {
@@ -198,9 +209,10 @@ final class PAC_Painel_Admin_Cliente {
         return admin_url(ltrim($url, '/'));
     }
 
-    public function render_dashboard_widget() {
+    public function render_dashboard_widget()
+    {
         $settings = $this->get_settings();
-        $items    = isset($settings['items']) && is_array($settings['items']) ? $settings['items'] : array();
+        $items = isset($settings['items']) && is_array($settings['items']) ? $settings['items'] : array();
 
         echo '<div class="pac-dashboard-wrapper">';
 
@@ -227,12 +239,12 @@ final class PAC_Painel_Admin_Cliente {
         foreach ($items as $item) {
             $item = wp_parse_args($item, $this->empty_item());
 
-            $title       = $item['title'];
+            $title = $item['title'];
             $description = $item['description'];
-            $icon        = $this->sanitize_icon($item['icon']);
-            $color       = sanitize_hex_color($item['color']);
-            $url         = $this->build_item_url($item['url']);
-            $new_tab     = !empty($item['new_tab']);
+            $icon = $this->sanitize_icon($item['icon']);
+            $color = sanitize_hex_color($item['color']);
+            $url = $this->build_item_url($item['url']);
+            $new_tab = !empty($item['new_tab']);
 
             if ('' === $title || '' === $url) {
                 continue;
@@ -261,13 +273,14 @@ final class PAC_Painel_Admin_Cliente {
         echo '</div>';
     }
 
-    public function render_settings_page() {
+    public function render_settings_page()
+    {
         if (!current_user_can('manage_options')) {
             return;
         }
 
         $settings = $this->get_settings();
-        $items    = $settings['items'];
+        $items = $settings['items'];
 
         if (empty($items)) {
             $items = array($this->empty_item());
@@ -343,11 +356,12 @@ final class PAC_Painel_Admin_Cliente {
         echo '</div>';
     }
 
-    private function render_item_row($item, $index) {
+    private function render_item_row($item, $index)
+    {
         $item = wp_parse_args($item, $this->empty_item());
 
-        $icon    = $this->sanitize_icon($item['icon']);
-        $color   = sanitize_hex_color($item['color']);
+        $icon = $this->sanitize_icon($item['icon']);
+        $color = sanitize_hex_color($item['color']);
         $new_tab = !empty($item['new_tab']) ? 1 : 0;
 
         if (!$color) {
@@ -371,7 +385,8 @@ final class PAC_Painel_Admin_Cliente {
         echo '</tr>';
     }
 
-    private function render_icon_picker_modal() {
+    private function render_icon_picker_modal()
+    {
         echo '<div id="pac-icon-modal" class="pac-icon-modal" hidden>';
         echo '<div class="pac-icon-modal-content" role="dialog" aria-modal="true" aria-labelledby="pac-icon-modal-title">';
         echo '<div class="pac-icon-modal-header">';
@@ -386,7 +401,8 @@ final class PAC_Painel_Admin_Cliente {
         echo '</div>';
     }
 
-    private function get_available_dashicons() {
+    private function get_available_dashicons()
+    {
         return array(
             'dashicons-admin-links',
             'dashicons-admin-site',
@@ -537,7 +553,8 @@ final class PAC_Painel_Admin_Cliente {
         );
     }
 
-    public function handle_save_settings() {
+    public function handle_save_settings()
+    {
         if (!current_user_can('manage_options')) {
             wp_die('Acesso negado.');
         }
@@ -545,24 +562,24 @@ final class PAC_Painel_Admin_Cliente {
         check_admin_referer('pac_save_settings_nonce');
 
         $replace_dashboard = !empty($_POST['pac_replace_dashboard']) ? 1 : 0;
-        $welcome_title     = isset($_POST['pac_welcome_title']) ? sanitize_text_field(wp_unslash($_POST['pac_welcome_title'])) : '';
-        $welcome_text      = isset($_POST['pac_welcome_text']) ? sanitize_textarea_field(wp_unslash($_POST['pac_welcome_text'])) : '';
+        $welcome_title = isset($_POST['pac_welcome_title']) ? sanitize_text_field(wp_unslash($_POST['pac_welcome_title'])) : '';
+        $welcome_text = isset($_POST['pac_welcome_text']) ? sanitize_textarea_field(wp_unslash($_POST['pac_welcome_text'])) : '';
 
         $raw_items = isset($_POST['pac_items']) ? wp_unslash($_POST['pac_items']) : array();
-        $items     = $this->sanitize_items($raw_items);
+        $items = $this->sanitize_items($raw_items);
 
         $settings = array(
             'replace_dashboard' => $replace_dashboard,
-            'welcome_title'     => $welcome_title,
-            'welcome_text'      => $welcome_text,
-            'items'             => $items,
+            'welcome_title' => $welcome_title,
+            'welcome_text' => $welcome_text,
+            'items' => $items,
         );
 
         update_option(self::OPTION_KEY, $settings);
 
         $redirect_url = add_query_arg(
             array(
-                'page'      => self::SLUG,
+                'page' => self::SLUG,
                 'pac_saved' => '1',
             ),
             admin_url('admin.php')
@@ -572,7 +589,8 @@ final class PAC_Painel_Admin_Cliente {
         exit;
     }
 
-    private function sanitize_items($raw_items) {
+    private function sanitize_items($raw_items)
+    {
         $items = array();
 
         if (!is_array($raw_items)) {
@@ -584,12 +602,12 @@ final class PAC_Painel_Admin_Cliente {
                 continue;
             }
 
-            $title       = isset($raw_item['title']) ? sanitize_text_field($raw_item['title']) : '';
-            $url         = isset($raw_item['url']) ? sanitize_text_field($raw_item['url']) : '';
+            $title = isset($raw_item['title']) ? sanitize_text_field($raw_item['title']) : '';
+            $url = isset($raw_item['url']) ? sanitize_text_field($raw_item['url']) : '';
             $description = isset($raw_item['description']) ? sanitize_text_field($raw_item['description']) : '';
-            $icon        = isset($raw_item['icon']) ? $this->sanitize_icon($raw_item['icon']) : 'dashicons-admin-links';
-            $color       = isset($raw_item['color']) ? sanitize_hex_color($raw_item['color']) : '#2271b1';
-            $new_tab     = !empty($raw_item['new_tab']) ? 1 : 0;
+            $icon = isset($raw_item['icon']) ? $this->sanitize_icon($raw_item['icon']) : 'dashicons-admin-links';
+            $color = isset($raw_item['color']) ? sanitize_hex_color($raw_item['color']) : '#2271b1';
+            $new_tab = !empty($raw_item['new_tab']) ? 1 : 0;
 
             if ('' === $title && '' === $url) {
                 continue;
@@ -600,19 +618,20 @@ final class PAC_Painel_Admin_Cliente {
             }
 
             $items[] = array(
-                'title'       => $title,
-                'url'         => $url,
+                'title' => $title,
+                'url' => $url,
                 'description' => $description,
-                'icon'        => $icon,
-                'color'       => $color,
-                'new_tab'     => $new_tab,
+                'icon' => $icon,
+                'color' => $color,
+                'new_tab' => $new_tab,
             );
         }
 
         return $items;
     }
 
-    private function sanitize_icon($icon) {
+    private function sanitize_icon($icon)
+    {
         $icon = strtolower(trim((string) $icon));
         $icon = preg_replace('/[^a-z0-9\-]/', '', $icon);
 
