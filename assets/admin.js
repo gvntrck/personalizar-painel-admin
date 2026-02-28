@@ -1,28 +1,32 @@
 (function ($) {
-    var body = $('#pac-items-body');
-    var addButton = $('#pac-add-item');
-    var template = $('#pac-item-row-template').html() || '';
+    var settings = window.pacPanelSettings || {};
+
+    var shortcutBody = $('#pac-items-body');
+    var addShortcutButton = $('#pac-add-item');
+    var shortcutTemplate = $('#pac-item-row-template').html() || '';
+
+    var metaBoxBody = $('#pac-meta-boxes-body');
+    var addMetaBoxButton = $('#pac-add-meta-box');
+    var metaBoxTemplate = $('#pac-meta-box-row-template').html() || '';
+
     var iconModal = $('#pac-icon-modal');
     var iconGrid = $('#pac-icon-grid');
     var iconSearch = $('#pac-icon-search');
     var iconClose = $('#pac-icon-close');
-    var i18n = (window.pacPanelSettings && window.pacPanelSettings.i18n) ? window.pacPanelSettings.i18n : {};
-    var icons = (window.pacPanelSettings && Array.isArray(window.pacPanelSettings.icons) && window.pacPanelSettings.icons.length)
-        ? window.pacPanelSettings.icons
-        : ['dashicons-admin-links'];
+
+    var i18n = settings.i18n || {};
+    var icons = (Array.isArray(settings.icons) && settings.icons.length) ? settings.icons : ['dashicons-admin-links'];
+
+    var nextShortcutIndex = Number.isInteger(parseInt(settings.nextIndex, 10))
+        ? parseInt(settings.nextIndex, 10)
+        : (shortcutBody.length ? shortcutBody.find('tr').length : 0);
+
+    var nextMetaBoxIndex = Number.isInteger(parseInt(settings.nextMetaBoxIndex, 10))
+        ? parseInt(settings.nextMetaBoxIndex, 10)
+        : (metaBoxBody.length ? metaBoxBody.find('tr').length : 0);
+
     var activeIconInput = null;
     var selectedIcon = 'dashicons-admin-links';
-    var nextIndex = 0;
-
-    if (!body.length || !addButton.length || !template.length) {
-        return;
-    }
-
-    if (window.pacPanelSettings && Number.isInteger(parseInt(window.pacPanelSettings.nextIndex, 10))) {
-        nextIndex = parseInt(window.pacPanelSettings.nextIndex, 10);
-    } else {
-        nextIndex = body.find('tr').length;
-    }
 
     function normalizeIcon(icon) {
         if (typeof icon !== 'string') {
@@ -79,6 +83,10 @@
     }
 
     function openIconPicker(input) {
+        if (!iconModal.length || !iconGrid.length || !iconSearch.length) {
+            return;
+        }
+
         activeIconInput = input;
         selectedIcon = normalizeIcon(input.val() || 'dashicons-admin-links');
 
@@ -99,53 +107,78 @@
         activeIconInput = null;
     }
 
-    addButton.on('click', function (event) {
-        event.preventDefault();
+    if (shortcutBody.length && addShortcutButton.length && shortcutTemplate.length) {
+        addShortcutButton.on('click', function (event) {
+            event.preventDefault();
 
-        var rowHtml = template.replace(/__INDEX__/g, String(nextIndex));
-        body.append(rowHtml);
-        nextIndex += 1;
-    });
+            var rowHtml = shortcutTemplate.replace(/__INDEX__/g, String(nextShortcutIndex));
+            shortcutBody.append(rowHtml);
+            nextShortcutIndex += 1;
+        });
 
-    body.on('click', '.pac-open-icon-picker', function (event) {
-        event.preventDefault();
-        openIconPicker($(this).closest('tr').find('.pac-icon-input').first());
-    });
+        shortcutBody.on('click', '.pac-remove-item', function (event) {
+            event.preventDefault();
+            $(this).closest('tr').remove();
+        });
 
-    body.on('click', '.pac-remove-item', function (event) {
-        event.preventDefault();
-        $(this).closest('tr').remove();
-    });
+        shortcutBody.on('click', '.pac-open-icon-picker', function (event) {
+            event.preventDefault();
+            openIconPicker($(this).closest('tr').find('.pac-icon-input').first());
+        });
+    }
 
-    iconGrid.on('click', '.pac-icon-choice', function (event) {
-        event.preventDefault();
+    if (metaBoxBody.length && addMetaBoxButton.length && metaBoxTemplate.length) {
+        addMetaBoxButton.on('click', function (event) {
+            event.preventDefault();
 
-        if (!activeIconInput) {
-            return;
-        }
+            var rowHtml = metaBoxTemplate.replace(/__MB_INDEX__/g, String(nextMetaBoxIndex));
+            metaBoxBody.append(rowHtml);
+            nextMetaBoxIndex += 1;
+        });
 
-        var icon = normalizeIcon($(this).attr('data-icon'));
-        updateRowIcon(activeIconInput, icon);
-        closeIconPicker();
-    });
+        metaBoxBody.on('click', '.pac-remove-meta-box', function (event) {
+            event.preventDefault();
+            $(this).closest('tr').remove();
+        });
+    }
 
-    iconSearch.on('input', function () {
-        renderIconGrid($(this).val());
-    });
+    if (iconGrid.length) {
+        iconGrid.on('click', '.pac-icon-choice', function (event) {
+            event.preventDefault();
 
-    iconClose.on('click', function (event) {
-        event.preventDefault();
-        closeIconPicker();
-    });
+            if (!activeIconInput) {
+                return;
+            }
 
-    iconModal.on('click', function (event) {
-        if ($(event.target).is('#pac-icon-modal')) {
+            var icon = normalizeIcon($(this).attr('data-icon'));
+            updateRowIcon(activeIconInput, icon);
             closeIconPicker();
-        }
-    });
+        });
+    }
+
+    if (iconSearch.length) {
+        iconSearch.on('input', function () {
+            renderIconGrid($(this).val());
+        });
+    }
+
+    if (iconClose.length) {
+        iconClose.on('click', function (event) {
+            event.preventDefault();
+            closeIconPicker();
+        });
+    }
+
+    if (iconModal.length) {
+        iconModal.on('click', function (event) {
+            if ($(event.target).is('#pac-icon-modal')) {
+                closeIconPicker();
+            }
+        });
+    }
 
     $(document).on('keydown', function (event) {
-        if ('Escape' === event.key && !iconModal.is('[hidden]')) {
+        if ('Escape' === event.key && iconModal.length && !iconModal.is('[hidden]')) {
             closeIconPicker();
         }
     });

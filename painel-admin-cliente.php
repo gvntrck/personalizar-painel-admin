@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Painel Admin
  * Description: Personaliza a tela inicial do wp-admin com atalhos e blocos para facilitar o uso por clientes.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Codex
  * License: GPLv2 or later
  * Text Domain: painel-admin
@@ -16,7 +16,7 @@ final class PAC_Painel_Admin_Cliente
 {
     const OPTION_KEY = 'pac_admin_panel_settings';
     const SLUG = 'pac-admin-panel-settings';
-    const VERSION = '1.1.0';
+    const VERSION = '1.2.0';
 
     public function __construct()
     {
@@ -65,6 +65,14 @@ final class PAC_Painel_Admin_Cliente
                     'new_tab' => 1,
                 ),
             ),
+            'meta_boxes' => array(
+                array(
+                    'title' => 'Instrucoes rapidas',
+                    'content' => "<ul><li>Use os atalhos do painel para tarefas comuns.</li><li>Se precisar de ajuda, fale com o suporte.</li></ul>",
+                    'context' => 'normal',
+                    'priority' => 'default',
+                ),
+            ),
         );
     }
 
@@ -80,6 +88,16 @@ final class PAC_Painel_Admin_Cliente
         );
     }
 
+    private function empty_meta_box()
+    {
+        return array(
+            'title' => '',
+            'content' => '',
+            'context' => 'normal',
+            'priority' => 'default',
+        );
+    }
+
     private function get_settings()
     {
         $settings = get_option(self::OPTION_KEY, array());
@@ -91,6 +109,10 @@ final class PAC_Painel_Admin_Cliente
 
         if (!isset($settings['items']) || !is_array($settings['items'])) {
             $settings['items'] = array();
+        }
+
+        if (!isset($settings['meta_boxes']) || !is_array($settings['meta_boxes'])) {
+            $settings['meta_boxes'] = array();
         }
 
         return $settings;
@@ -127,6 +149,7 @@ final class PAC_Painel_Admin_Cliente
         if ($settings_hook === $hook) {
             $settings = $this->get_settings();
             $next_index = count($settings['items']);
+            $next_meta_box_index = count($settings['meta_boxes']);
 
             wp_enqueue_script(
                 'pac-admin-script',
@@ -141,6 +164,7 @@ final class PAC_Painel_Admin_Cliente
                 'pacPanelSettings',
                 array(
                     'nextIndex' => $next_index,
+                    'nextMetaBoxIndex' => $next_meta_box_index,
                     'icons' => $this->get_available_dashicons(),
                     'i18n' => array(
                         'searchPlaceholder' => 'Buscar icone...',
@@ -165,6 +189,9 @@ final class PAC_Painel_Admin_Cliente
             'Painel rapido do cliente',
             array($this, 'render_dashboard_widget')
         );
+
+        $meta_boxes = isset($settings['meta_boxes']) && is_array($settings['meta_boxes']) ? $settings['meta_boxes'] : array();
+        $this->register_custom_meta_boxes($meta_boxes);
     }
 
     private function remove_default_dashboard_widgets()
@@ -273,6 +300,80 @@ final class PAC_Painel_Admin_Cliente
         echo '</div>';
     }
 
+    private function register_custom_meta_boxes($meta_boxes)
+    {
+        if (empty($meta_boxes) || !is_array($meta_boxes)) {
+            return;
+        }
+
+        foreach ($meta_boxes as $index => $meta_box) {
+            $meta_box = wp_parse_args($meta_box, $this->empty_meta_box());
+            $title = trim((string) $meta_box['title']);
+            $content = trim((string) $meta_box['content']);
+
+            if ('' === $title || '' === $content) {
+                continue;
+            }
+
+            $context = $this->normalize_meta_box_context($meta_box['context']);
+            $priority = $this->normalize_meta_box_priority($meta_box['priority']);
+            $widget_id = $this->build_meta_box_id($index, $title);
+
+            wp_add_dashboard_widget(
+                $widget_id,
+                $title,
+                array($this, 'render_custom_meta_box'),
+                null,
+                array(
+                    'content' => $content,
+                ),
+                $context,
+                $priority
+            );
+        }
+    }
+
+    public function render_custom_meta_box($post, $callback_args)
+    {
+        $args = isset($callback_args['args']) && is_array($callback_args['args']) ? $callback_args['args'] : array();
+        $content = isset($args['content']) ? (string) $args['content'] : '';
+
+        if ('' === trim($content)) {
+            echo '<p>Sem conteudo.</p>';
+            return;
+        }
+
+        echo '<div class="pac-custom-meta-box-content">';
+        echo wp_kses_post(wpautop($content));
+        echo '</div>';
+    }
+
+    private function build_meta_box_id($index, $title)
+    {
+        $sanitized_title = sanitize_key(remove_accents($title));
+        if ('' === $sanitized_title) {
+            $sanitized_title = 'box';
+        }
+
+        return 'pac_custom_box_' . absint($index) . '_' . $sanitized_title;
+    }
+
+    private function normalize_meta_box_context($context)
+    {
+        $allowed = array('normal', 'side');
+        $context = is_string($context) ? strtolower($context) : 'normal';
+
+        return in_array($context, $allowed, true) ? $context : 'normal';
+    }
+
+    private function normalize_meta_box_priority($priority)
+    {
+        $allowed = array('high', 'core', 'default', 'low');
+        $priority = is_string($priority) ? strtolower($priority) : 'default';
+
+        return in_array($priority, $allowed, true) ? $priority : 'default';
+    }
+
     public function render_settings_page()
     {
         if (!current_user_can('manage_options')) {
@@ -281,9 +382,14 @@ final class PAC_Painel_Admin_Cliente
 
         $settings = $this->get_settings();
         $items = $settings['items'];
+        $meta_boxes = $settings['meta_boxes'];
 
         if (empty($items)) {
             $items = array($this->empty_item());
+        }
+
+        if (empty($meta_boxes)) {
+            $meta_boxes = array($this->empty_meta_box());
         }
 
         echo '<div class="wrap pac-settings-wrap">';
@@ -344,6 +450,28 @@ final class PAC_Painel_Admin_Cliente
         echo '<p><button type="button" class="button" id="pac-add-item">Adicionar atalho</button></p>';
         echo '<p><small>Escolha o icone pelo seletor visual. Referencia completa: <a href="https://developer.wordpress.org/resource/dashicons/" target="_blank" rel="noopener noreferrer">Dashicons</a>.</small></p>';
 
+        echo '<hr />';
+        echo '<h2>Meta Boxes adicionais</h2>';
+        echo '<p>Crie quantos blocos extras quiser para aparecer no Dashboard (ex: avisos, checklist, instrucoes).</p>';
+
+        echo '<table class="widefat striped pac-meta-boxes-table">';
+        echo '<thead><tr>';
+        echo '<th>Titulo do Meta Box</th>';
+        echo '<th>Conteudo</th>';
+        echo '<th>Posicao</th>';
+        echo '<th>Prioridade</th>';
+        echo '<th>Acao</th>';
+        echo '</tr></thead>';
+        echo '<tbody id="pac-meta-boxes-body">';
+
+        foreach ($meta_boxes as $index => $meta_box) {
+            $this->render_meta_box_row($meta_box, (string) $index);
+        }
+
+        echo '</tbody>';
+        echo '</table>';
+        echo '<p><button type="button" class="button" id="pac-add-meta-box">Adicionar Meta Box</button></p>';
+
         submit_button('Salvar configuracoes');
 
         echo '</form>';
@@ -351,6 +479,11 @@ final class PAC_Painel_Admin_Cliente
         echo '<script type="text/template" id="pac-item-row-template">';
         $this->render_item_row($this->empty_item(), '__INDEX__');
         echo '</script>';
+
+        echo '<script type="text/template" id="pac-meta-box-row-template">';
+        $this->render_meta_box_row($this->empty_meta_box(), '__MB_INDEX__');
+        echo '</script>';
+
         $this->render_icon_picker_modal();
 
         echo '</div>';
@@ -382,6 +515,33 @@ final class PAC_Painel_Admin_Cliente
         echo '<td><input type="color" name="pac_items[' . esc_attr($index) . '][color]" value="' . esc_attr($color) . '" /></td>';
         echo '<td><label><input type="checkbox" name="pac_items[' . esc_attr($index) . '][new_tab]" value="1" ' . checked($new_tab, 1, false) . ' /> Sim</label></td>';
         echo '<td><button type="button" class="button-link-delete pac-remove-item">Remover</button></td>';
+        echo '</tr>';
+    }
+
+    private function render_meta_box_row($meta_box, $index)
+    {
+        $meta_box = wp_parse_args($meta_box, $this->empty_meta_box());
+        $context = $this->normalize_meta_box_context($meta_box['context']);
+        $priority = $this->normalize_meta_box_priority($meta_box['priority']);
+
+        echo '<tr class="pac-meta-box-row">';
+        echo '<td><input type="text" class="regular-text" name="pac_meta_boxes[' . esc_attr($index) . '][title]" value="' . esc_attr($meta_box['title']) . '" placeholder="Ex: Avisos importantes" /></td>';
+        echo '<td><textarea class="large-text pac-meta-box-content" rows="4" name="pac_meta_boxes[' . esc_attr($index) . '][content]" placeholder="Conteudo do bloco (aceita HTML basico)">' . esc_textarea($meta_box['content']) . '</textarea></td>';
+        echo '<td>';
+        echo '<select name="pac_meta_boxes[' . esc_attr($index) . '][context]">';
+        echo '<option value="normal" ' . selected($context, 'normal', false) . '>Principal</option>';
+        echo '<option value="side" ' . selected($context, 'side', false) . '>Lateral</option>';
+        echo '</select>';
+        echo '</td>';
+        echo '<td>';
+        echo '<select name="pac_meta_boxes[' . esc_attr($index) . '][priority]">';
+        echo '<option value="high" ' . selected($priority, 'high', false) . '>Alta</option>';
+        echo '<option value="core" ' . selected($priority, 'core', false) . '>Media alta</option>';
+        echo '<option value="default" ' . selected($priority, 'default', false) . '>Padrao</option>';
+        echo '<option value="low" ' . selected($priority, 'low', false) . '>Baixa</option>';
+        echo '</select>';
+        echo '</td>';
+        echo '<td><button type="button" class="button-link-delete pac-remove-meta-box">Remover</button></td>';
         echo '</tr>';
     }
 
@@ -567,12 +727,15 @@ final class PAC_Painel_Admin_Cliente
 
         $raw_items = isset($_POST['pac_items']) ? wp_unslash($_POST['pac_items']) : array();
         $items = $this->sanitize_items($raw_items);
+        $raw_meta_boxes = isset($_POST['pac_meta_boxes']) ? wp_unslash($_POST['pac_meta_boxes']) : array();
+        $meta_boxes = $this->sanitize_meta_boxes($raw_meta_boxes);
 
         $settings = array(
             'replace_dashboard' => $replace_dashboard,
             'welcome_title' => $welcome_title,
             'welcome_text' => $welcome_text,
             'items' => $items,
+            'meta_boxes' => $meta_boxes,
         );
 
         update_option(self::OPTION_KEY, $settings);
@@ -628,6 +791,43 @@ final class PAC_Painel_Admin_Cliente
         }
 
         return $items;
+    }
+
+    private function sanitize_meta_boxes($raw_meta_boxes)
+    {
+        $meta_boxes = array();
+
+        if (!is_array($raw_meta_boxes)) {
+            return $meta_boxes;
+        }
+
+        foreach ($raw_meta_boxes as $raw_meta_box) {
+            if (!is_array($raw_meta_box)) {
+                continue;
+            }
+
+            $title = isset($raw_meta_box['title']) ? sanitize_text_field($raw_meta_box['title']) : '';
+            $content = isset($raw_meta_box['content']) ? wp_kses_post($raw_meta_box['content']) : '';
+            $context = isset($raw_meta_box['context']) ? $this->normalize_meta_box_context($raw_meta_box['context']) : 'normal';
+            $priority = isset($raw_meta_box['priority']) ? $this->normalize_meta_box_priority($raw_meta_box['priority']) : 'default';
+
+            if ('' === trim($title) && '' === trim($content)) {
+                continue;
+            }
+
+            if ('' === trim($title) || '' === trim($content)) {
+                continue;
+            }
+
+            $meta_boxes[] = array(
+                'title' => $title,
+                'content' => $content,
+                'context' => $context,
+                'priority' => $priority,
+            );
+        }
+
+        return $meta_boxes;
     }
 
     private function sanitize_icon($icon)

@@ -67,14 +67,38 @@
     max-width: 1200px;
 }
 
+.pac-settings-wrap .pac-meta-boxes-table {
+    max-width: 1200px;
+}
+
 .pac-settings-wrap .pac-items-table th,
-.pac-settings-wrap .pac-items-table td {
+.pac-settings-wrap .pac-items-table td,
+.pac-settings-wrap .pac-meta-boxes-table th,
+.pac-settings-wrap .pac-meta-boxes-table td {
     vertical-align: middle;
 }
 
 .pac-settings-wrap .pac-items-table input[type="text"] {
     width: 100%;
     min-width: 130px;
+}
+
+.pac-settings-wrap .pac-meta-boxes-table input[type="text"],
+.pac-settings-wrap .pac-meta-boxes-table textarea,
+.pac-settings-wrap .pac-meta-boxes-table select {
+    width: 100%;
+}
+
+.pac-settings-wrap .pac-meta-box-content {
+    min-width: 320px;
+}
+
+.pac-custom-meta-box-content > :first-child {
+    margin-top: 0;
+}
+
+.pac-custom-meta-box-content > :last-child {
+    margin-bottom: 0;
 }
 
 .pac-open-icon-picker {
@@ -221,6 +245,12 @@ body.pac-icon-modal-open {
     }
 
     .pac-settings-wrap .pac-items-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .pac-settings-wrap .pac-meta-boxes-table {
         display: block;
         overflow-x: auto;
         white-space: nowrap;
