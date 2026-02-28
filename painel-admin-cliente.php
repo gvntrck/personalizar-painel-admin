@@ -1,9 +1,11 @@
 <?php
 /**
  * Plugin Name: WP Client Dashboard
+ * Plugin URI: https://github.com/gvntrck/
  * Description: Personaliza a tela inicial do wp-admin com atalhos e blocos para facilitar o uso por clientes.
- * Version: 1.3.1
- * Author: Codex
+ * Version: 1.3.2
+ * Author: Gvntrck
+ * Author URI: https://projetoalfa.org
  * License: GPLv2 or later
  * Text Domain: wp-client-dashboard
  */
@@ -16,7 +18,7 @@ final class PAC_Painel_Admin_Cliente
 {
     const OPTION_KEY = 'pac_admin_panel_settings';
     const SLUG = 'pac-admin-panel-settings';
-    const VERSION = '1.3.1';
+    const VERSION = '1.3.2';
 
     public function __construct()
     {
