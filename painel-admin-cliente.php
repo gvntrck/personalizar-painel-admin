@@ -225,6 +225,13 @@ final class PAC_Painel_Admin_Cliente
 
         foreach ($items as $item) {
             $item = wp_parse_args($item, $this->empty_item());
+            $title = trim((string) $item['title']);
+            $url = trim((string) $item['url']);
+
+            if ('' === $title || '' === $url) {
+                continue;
+            }
+
             $panel_title = trim((string) $item['panel']);
 
             if ('' === $panel_title) {
